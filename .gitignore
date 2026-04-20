@@ -205,3 +205,11 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# removing .env
+.env
+__pycache__/
+*.zip
+terraform/.terraform/
+terraform/*.tfstate
+

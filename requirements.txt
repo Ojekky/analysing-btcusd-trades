@@ -1,0 +1,15 @@
+# Data Ingestion & Orchestration
+dlt[az,synapse]>=1.0.0
+azure-identity
+azure-storage-blob
+requests
+
+# Data Transformation (Data Warehouse)
+dbt-core>=1.8.0
+dbt-synapse>=1.8.0
+
+# Infrastructure & Utilities
+azure-cli
+python-dotenv
+pandas
+pyarrow
