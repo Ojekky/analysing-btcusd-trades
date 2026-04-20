@@ -58,4 +58,4 @@ To ensure the project remains cost-effective and performant within Azure Synapse
 
 
 ---
-*Developed as a project for Data Engineering Project for [DATATALKS CLUB](https://github.com/DataTalksClub).*
+*Developed as a project for Data Engineering Zoomcamp 2026 Project [DATATALKS CLUB](https://github.com/DataTalksClub).*
