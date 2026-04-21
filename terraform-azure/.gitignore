@@ -1,0 +1,22 @@
+# Terraform state — contains sensitive infrastructure details
+.terraform/
+.terraform.lock.hcl
+terraform.tfstate
+terraform.tfstate.backup
+
+# Secret variable files — never commit these
+terraform.tfvars
+*.auto.tfvars
+
+# Keep the example file — it documents required variables
+!terraform.tfvars.example
+
+# Crash logs
+crash.log
+crash.*.log
+
+# Override files
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json

@@ -1,0 +1,65 @@
+name: Binance Monthly Incremental Ingest
+
+on:
+  # ── Automatic: runs on the 2nd of every month at 06:00 UTC ──────────────
+  # The 2nd gives Binance time to publish the previous month's complete file.
+  schedule:
+    - cron: '0 6 2 * *'
+
+  # ── Manual: run anytime from the GitHub Actions tab ─────────────────────
+  workflow_dispatch:
+
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Check out your repo
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2. Set up Python
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      # 3. Cache pip dependencies so subsequent runs are faster
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      # 4. Install dependencies
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      # 5. Write secrets into the .dlt folder so dlt can find them
+      #    The secrets live in GitHub → Settings → Secrets and variables → Actions
+      - name: Write dlt secrets
+        run: |
+          mkdir -p .dlt
+          cat > .dlt/secrets.toml << SECRETS
+          [destination.synapse]
+          credentials = "${{ secrets.SYNAPSE_CONNECTION_STRING }}"
+          SECRETS
+
+      # 6. Write dlt config (no secrets here — safe to hardcode)
+      - name: Write dlt config
+        run: |
+          cat > .dlt/config.toml << CONFIG
+          [runtime]
+          batch_size = 50
+
+          [load]
+          loader_file_format = "insert_values"
+          CONFIG
+
+      # 7. Run the incremental load
+      - name: Run incremental ingest
+        run: python binance_ingest.py --mode incremental

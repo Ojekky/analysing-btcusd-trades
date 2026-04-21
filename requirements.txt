@@ -13,3 +13,4 @@ azure-cli
 python-dotenv
 pandas
 pyarrow
+pyodbc

@@ -1,0 +1,7 @@
+[runtime]
+# This keeps the SQL commands small enough for Synapse to handle
+batch_size = 10
+
+[load]
+# Forces dlt to use SQL INSERT instead of trying to use the storage bucket
+loader_file_format = "insert_values"
