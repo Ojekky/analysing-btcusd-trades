@@ -1,16 +1,26 @@
-# Data Ingestion & Orchestration
-dlt[az,synapse]>=1.0.0
-azure-identity
-azure-storage-blob
-requests
+# =============================================================================
+# Pinned to exact versions confirmed working in local venv (codespace)
+# Do NOT add azure-cli — it causes dlt to backtrack to v1.4.1
+# =============================================================================
 
-# Data Transformation (Data Warehouse)
-dbt-core>=1.8.0
-dbt-synapse>=1.8.0
+# --- Ingestion (dlt → Synapse) -----------------------------------------------
+dlt[synapse]==1.25.0
+setuptools==80.10.2
 
-# Infrastructure & Utilities
-azure-cli
+# --- Azure auth & storage (required by dlt synapse destination) --------------
+azure-identity==1.25.3
+azure-storage-blob==12.28.0
+
+# --- Data handling ------------------------------------------------------------
+pandas==3.0.2
+pyarrow==23.0.1
+requests==2.33.1
+pyodbc==5.1.0
+
+# --- dbt transformation (next stage) -----------------------------------------
+dbt-core==1.11.8
+dbt-synapse==1.9.0         # was dbt-sqlserver in venv — use dbt-synapse for Synapse
+dbt-fabric==1.9.3
+
+# --- Utilities ----------------------------------------------------------------
 python-dotenv
-pandas
-pyarrow
-pyodbc
