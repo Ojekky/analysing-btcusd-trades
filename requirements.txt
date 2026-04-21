@@ -19,7 +19,8 @@ pyodbc==5.1.0
 
 # --- dbt transformation (next stage) -----------------------------------------
 dbt-core==1.8.0
-dbt-synapse==1.8.4        # was dbt-sqlserver in venv — use dbt-synapse for Synapse
+dbt-synapse==1.8.4
+dbt-sqlserver==1.8.2      
 dbt-fabric==1.9.3
 
 # --- Utilities ----------------------------------------------------------------
