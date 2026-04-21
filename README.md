@@ -521,7 +521,7 @@ Binance → dlt → ADLS → Synapse → dbt → Power BI
 
 ### 📊 Data Source
 
-- :contentReference[oaicite:0]{index=0} Public Data Repository  
+- Binance Public Data Repository  
   https://github.com/binance/binance-public-data  
 
   Used for historical BTC/USDT kline (candlestick) data across multiple years, including OHLC prices, volume, and trade activity at 1-hour intervals.
@@ -530,44 +530,47 @@ Binance → dlt → ADLS → Synapse → dbt → Power BI
 
 ### ⚙️ Tools & Technologies
 
-- :contentReference[oaicite:1]{index=1}  
+- Azure  
   Used for:
   - Azure Data Lake Storage Gen2 (ADLS)
   - Azure Synapse Analytics (Dedicated SQL Pool)
 
-- :contentReference[oaicite:2]{index=2}  
+- Terraform 
   https://developer.hashicorp.com/terraform/docs  
   Used for provisioning and managing cloud infrastructure.
 
-- :contentReference[oaicite:3]{index=3}  
+- Dlt
   https://dlthub.com/docs/intro  
   Used to build the ingestion pipeline with schema evolution and efficient batch loading.
 
-- :contentReference[oaicite:4]{index=4}  
+- Dbt
   https://docs.getdbt.com/  
   Used for transforming raw data into analytical models.
 
-- :contentReference[oaicite:5]{index=5}  
+- Power Bi Desktop
   Used for building interactive dashboards and visualizing intraday trading patterns.
 
 ---
 
 ### 📖 Supporting Documentation
 
-- :contentReference[oaicite:6]{index=6} Data Download Scripts  
+- Data Download Scripts  
   https://github.com/binance/binance-public-data/tree/master/python  
 
   Referenced for understanding file structure, naming conventions, and download methodology.
 
-- :contentReference[oaicite:7]{index=7} Azure Synapse Documentation  
+- Azure Synapse Documentation  
   https://learn.microsoft.com/en-us/azure/synapse-analytics/  
 
   Used for configuring SQL pools, external access, and query execution.
 
-- :contentReference[oaicite:8]{index=8} Data Engineering Zoomcamp  
+- Data Engineering Zoomcamp  
   https://github.com/DataTalksClub/data-engineering-zoomcamp  
+  
+  Alongside the https://datatalksclub-projects.streamlit.app/ link to review past projects.
 
   Provided foundational guidance on modern data stack architecture and best practices.
+
 
 ---
 
