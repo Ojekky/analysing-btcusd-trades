@@ -204,21 +204,198 @@ python-dotenv
 
 ---
 
+## 🔄 Data Transformation (dbt)
+
+### Overview
+Transformation is handled by [dbt (data build tool)](https://www.getdbt.com/) using the `dbt-synapse` adapter. The dbt project lives in the `btc_transforms/` folder and follows a three-layer medallion architecture: staging → intermediate → marts.
+
+```
+btc_transforms/
+├── dbt_project.yml
+├── models/
+│   ├── staging/
+│   │   ├── sources.yml
+│   │   └── stg_btcusdt_klines.sql
+│   ├── intermediate/
+│   │   └── int_btcusdt_enriched.sql
+│   └── marts/
+│       └── mart_hourly_stats.sql
+├── tests/
+└── macros/
+```
+
+### Installation
+
+```bash
+source venv/bin/activate
+
+pip install dbt-core==1.8.0 dbt-synapse==1.8.4 dbt-sqlserver==1.8.2 --force-reinstall
+
+dbt --version
+```
+
+Expected output:
+```
+Core:
+  - installed: 1.8.0
+Plugins:
+  - synapse: 1.8.4
+```
+
+### Profiles setup
+
+`profiles.yml` lives at `~/.dbt/profiles.yml` — **outside the repo** so credentials are never committed. This file is not visible in the repo explorer and is never tracked by git.
+
+```bash
+mkdir -p ~/.dbt
+cat > ~/.dbt/profiles.yml << 'EOF'
+btc_transforms:
+  target: dev
+  outputs:
+    dev:
+      type: synapse
+      driver: "ODBC Driver 18 for SQL Server"
+      host: <your-workspace>.sql.azuresynapse.net
+      port: 1433
+      database: <your-pool>
+      schema: gold_btc_data
+      user: <your-user>
+      password: <your-password>
+      authentication: sql
+      encrypt: true
+      trust_cert: true
+EOF
+```
+
+> **Important:** Use `authentication: sql` (not `SqlPassword`) — this is the correct value for dbt-synapse 1.8.x. Using `SqlPassword` causes authentication to fail even with correct credentials.
+
+### Test the connection
+
+```bash
+cd btc_transforms
+dbt debug
+```
+
+Expected output:
+```
+profiles.yml file [OK found and valid]
+dbt_project.yml file [OK found and valid]
+git [OK found]
+Connection test: [OK connection ok]
+All checks passed!
+```
+
+> If the connection fails with `Invalid user or password`, check that the Synapse dedicated SQL pool is **Online** (not Paused) in the Azure Portal before retrying.
+
+### Model layers
+
+#### Bronze — `models/staging/stg_btcusdt_klines.sql`
+Selects directly from the raw dlt-loaded table. Casts all columns to correct types and renames for clarity. Materialised as a **view**.
+
+Key design notes:
+- Reserved T-SQL words (`open`, `close`, `count`, `year`, `month`, `day`, `hour`) must be wrapped in square brackets `[open]`, `[close]` etc. — failing to do so causes a Synapse parse error.
+
+#### Silver — `models/intermediate/int_btcusdt_enriched.sql`
+Adds all derived columns needed for analysis. Materialised as a **view**.
+
+Derived columns added:
+
+| Column | Formula | Purpose |
+|---|---|---|
+| `price_range` | `high - low` | Candle range in USD |
+| `body_size` | `abs(close - open)` | Candle body size |
+| `is_bullish` | `close >= open` | 1 if bullish, 0 if bearish |
+| `typical_price` | `(high + low + close) / 3` | Standard typical price |
+| `candle_return_pct` | `(close - open) / open * 100` | Percentage return per candle |
+| `buy_pressure_ratio` | `taker_buy_base / volume` | Ratio of aggressive buyers |
+| `trading_session` | UTC hour ranges | Asian / European / US / Off-Hours |
+
+Trading session UTC hour boundaries:
+
+| Session | Hours (UTC) |
+|---|---|
+| Asian | 00:00 – 07:59 |
+| European | 08:00 – 12:59 |
+| US | 13:00 – 20:59 |
+| Off-Hours | 21:00 – 23:59 |
+
+#### Gold — `models/marts/mart_hourly_stats.sql`
+Final aggregated mart used by Power BI. Materialised as a **physical table** in Synapse. Contains one row per hour of day (24 rows total) with all metrics aggregated across the full dataset.
+
+> **Note:** `ORDER BY` is not permitted in Synapse table models — sorting is done at query time in Power BI, not in the model definition.
+
+Output columns:
+
+| Column | Description |
+|---|---|
+| `hour` | Hour of day (0–23 UTC) |
+| `trading_session` | Session label |
+| `total_candles` | Count of candles at this hour |
+| `avg_return_pct` | Mean hourly return |
+| `volatility` | Standard deviation of returns |
+| `avg_price_range` | Mean high-low range |
+| `avg_volume` | Mean BTC volume |
+| `avg_buy_pressure` | Mean taker buy ratio |
+| `bullish_pct` | % of candles that closed up |
+
+### Running dbt
+
+```bash
+cd btc_transforms
+
+# Run all three layers in dependency order
+dbt run
+
+# Run data quality tests
+dbt test
+```
+
+Successful output:
+```
+1 of 3 OK created sql view model staging.stg_btcusdt_klines .......... [OK in 1.50s]
+2 of 3 OK created sql view model intermediate.int_btcusdt_enriched ... [OK in 1.03s]
+3 of 3 OK created sql table model marts.mart_hourly_stats ............ [OK in 7.13s]
+
+Done. PASS=3 WARN=0 ERROR=0 SKIP=0 TOTAL=3
+```
+
+### Troubleshooting encountered
+
+**`Incorrect syntax near 'open'`**
+Synapse treats `open`, `close`, `count`, `year`, `month`, `day`, and `hour` as reserved words. All such column references must use square bracket escaping: `[open]`, `[close]`, `[hour]` etc.
+
+**`ORDER BY clause is not valid`**
+Synapse does not allow `ORDER BY` in table model definitions. Removed from `mart_hourly_stats.sql` — ordering is applied at query/visualisation time instead.
+
+**`authentication: SqlPassword` failing**
+Even with correct credentials, `SqlPassword` caused login failure for dbt-synapse 1.8.x. Changed to `authentication: sql` which resolved the issue.
+
+### `btc_transforms/.gitignore`
+
+The following are generated by dbt at runtime and must not be committed:
+
+```
+target/
+dbt_packages/
+logs/
+dbt.log
+profiles.yml
+*.yml.local
+__pycache__/
+*.pyc
+.DS_Store
+```
+
+---
+
 ## 🛠️ Performance Optimisation
 To ensure the project remains cost-effective and performant within Azure Synapse:
 * **Partitioning:** Tables are partitioned by **Month** to optimise historical lookbacks.
 * **Clustering:** Data is clustered by **Hour** to accelerate time-series mining queries.
 * **Columnar storage:** Parquet in ADLS Gen2 minimises I/O and storage costs for staging.
 
-
-
-
-
-
-
-
-
 ---
-*Developed as a project for Data Engineering Zoomcamp 2026 Project [DATATALKS CLUB](https://github.com/DataTalksClub).*
 
 
+
+*Developed as a project for Data Engineering Zoomcamp 2026 — [DataTalks.Club](https://github.com/DataTalksClub).*
