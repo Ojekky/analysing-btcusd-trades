@@ -571,17 +571,6 @@ Binance → dlt → ADLS → Synapse → dbt → Power BI
 
 ---
 
-### 🤖 Development Aids
-
-- :contentReference[oaicite:9]{index=9}  
-- :contentReference[oaicite:10]{index=10}  
-- :contentReference[oaicite:11]{index=11}  
-
-  Used as development aids for debugging, structuring code, and exploring implementation approaches.  
-  All architectural decisions, implementation logic, and validation were independently reviewed and adapted.
-
----
-
 ## 🙌 Acknowledgment
 
 This project was completed as part of a hands-on data engineering learning journey, combining real-world financial data with modern cloud-based data stack practices.
