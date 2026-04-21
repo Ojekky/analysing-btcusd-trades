@@ -121,13 +121,86 @@ python binance_ingest.py --mode single --year 2024 --month 6
 python binance_ingest.py --mode backfill --dry-run
 ```
 
-### Automated monthly scheduling
-The incremental load is triggered automatically on the **2nd of every month at 06:00 UTC** via GitHub Actions (`.github/workflows/binance_incremental.yml`). The Synapse connection string is stored as a GitHub repository secret (`SYNAPSE_CONNECTION_STRING`).
+## 🤖 Automated Monthly Scheduling (GitHub Actions)
 
-To trigger a manual run at any time:
+The incremental load runs automatically on the **2nd of every month at 06:00 UTC** via GitHub Actions. The 2nd is chosen to allow Binance time to publish the previous month's complete archive (published on the 1st).
+
+The workflow is defined in `.github/workflows/binance_incremental.yml`.
+
+### How it works
+
+Each run performs the following steps in a fresh Ubuntu environment:
+
+1. **Checkout repository** — pulls the latest code from the `main` branch.
+2. **Set up Python 3.12** — provisions the exact Python version used in development.
+3. **Cache pip dependencies** — caches installed packages using a hash of `requirements.txt` so subsequent runs are faster.
+4. **Install dependencies** — installs from `requirements.txt` using pinned versions (see below).
+5. **Write dlt secrets** — injects the Synapse connection string from the GitHub repository secret `SYNAPSE_CONNECTION_STRING` into `.dlt/secrets.toml` at runtime. This file is never committed to the repo.
+6. **Write dlt config** — writes `.dlt/config.toml` with `batch_size = 50` and `loader_file_format = "insert_values"` directly in the workflow so no config file needs to be committed.
+7. **Run incremental ingest** — executes `python binance_ingest.py --mode incremental`, which fetches and loads the previous calendar month into Synapse.
+
+### Triggering a manual run
+
 1. Go to the repo → **Actions** tab
-2. Select **Binance Monthly Incremental Ingest**
-3. Click **Run workflow**
+2. Select **Binance Monthly Incremental Ingest** in the left sidebar
+3. Click **Run workflow** → **Run workflow**
+
+The workflow logs show the same per-month status output as a local run.
+
+### Setting up the GitHub Secret
+
+The Synapse connection string must be stored as a repository secret — never hardcoded:
+
+1. Go to repo → **Settings** → **Secrets and variables** → **Actions**
+2. Click **New repository secret**
+3. Name: `SYNAPSE_CONNECTION_STRING`
+4. Value: your full Synapse connection string:
+   ```
+   synapse://<user>:<password>@<workspace>.sql.azuresynapse.net:1433/<pool>
+   ```
+
+### Troubleshooting: `pkg_resources` error
+
+During initial setup, the GitHub Actions run failed with:
+
+```
+ModuleNotFoundError: No module named 'pkg_resources'
+```
+
+**Root cause:** `azure-cli` was included in `requirements.txt`. It pulls in over 100 transitive dependencies and caused pip to backtrack, resolving `dlt` all the way down to version `1.4.1`. That old version imports `pkg_resources` which is not available without `setuptools` being explicitly installed.
+
+**Fix applied:**
+- Removed `azure-cli` from `requirements.txt` entirely — it is not needed by the ingest script.
+- Pinned `dlt==1.25.0` explicitly to prevent pip backtracking.
+- Added `setuptools==80.10.2` explicitly as a safety net.
+
+All versions in `requirements.txt` are now pinned to match the working local codespace venv exactly.
+
+### `requirements.txt` (pinned working versions)
+
+```txt
+# Ingestion
+dlt[synapse]==1.25.0
+setuptools==80.10.2
+
+# Azure auth & storage
+azure-identity==1.25.3
+azure-storage-blob==12.28.0
+
+# Data handling
+pandas==3.0.2
+pyarrow==23.0.1
+requests==2.33.1
+pyodbc==5.1.0
+
+# dbt transformation
+dbt-core==1.8.0
+dbt-synapse==1.8.4
+dbt-fabric==1.9.3
+
+# Utilities
+python-dotenv
+```
 
 ---
 
@@ -136,11 +209,6 @@ To ensure the project remains cost-effective and performant within Azure Synapse
 * **Partitioning:** Tables are partitioned by **Month** to optimise historical lookbacks.
 * **Clustering:** Data is clustered by **Hour** to accelerate time-series mining queries.
 * **Columnar storage:** Parquet in ADLS Gen2 minimises I/O and storage costs for staging.
-
----
-
-*Developed as a project for Data Engineering Zoomcamp 2026 — [DataTalks.Club](https://github.com/DataTalksClub).*
-
 
 
 

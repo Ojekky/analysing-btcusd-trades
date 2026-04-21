@@ -2,3 +2,12 @@
 target/
 dbt_packages/
 logs/
+target/
+dbt_packages/
+logs/
+dbt.log
+profiles.yml
+*.yml.local
+__pycache__/
+*.pyc
+.DS_Store

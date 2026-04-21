@@ -1,4 +1,0 @@
-dlt[filesystem]
-pandas
-pyarrow
-requests

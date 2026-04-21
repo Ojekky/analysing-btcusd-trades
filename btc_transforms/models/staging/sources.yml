@@ -1,0 +1,15 @@
+version: 2
+
+sources:
+  - name: gold_btc_data
+    schema: gold_btc_data
+    description: "Raw BTCUSDT 1h klines loaded by dlt ingestion pipeline"
+    tables:
+      - name: btcusdt_1h_klines
+        description: "Raw hourly candles from Binance public data archive"
+        columns:
+          - name: open_time
+            description: "Candle open timestamp — primary key"
+            tests:
+              - unique
+              - not_null
