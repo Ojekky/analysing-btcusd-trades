@@ -397,5 +397,196 @@ To ensure the project remains cost-effective and performant within Azure Synapse
 ---
 
 
+# 📊 Power BI Visualisation — Intraday Pattern Mining
 
-*Developed as a project for Data Engineering Zoomcamp 2026 — [DataTalks.Club](https://github.com/DataTalksClub).*
+## Overview
+The final layer of this project transforms engineered data into actionable trading insights using Power BI.
+
+The dashboard is built on top of the `mart_hourly_stats` table, which aggregates BTC/USDT hourly data into 24 rows (one per hour).
+
+---
+
+## 🔌 Connecting Power BI to Synapse
+
+1. Open Power BI Desktop  
+2. Home → Get Data → Azure → Azure Synapse Analytics SQL  
+
+**Connection details:**
+- Server: dezoom26synapse01.sql.azuresynapse.net  
+- Database: dezoom26sqlpool01  
+- Mode: Import  
+
+3. Use **Database authentication**  
+4. Load: `marts → mart_hourly_stats`
+
+---
+
+## 📈 Dashboard Overview
+
+![Power BI Dashboard](image-1.png)
+
+---
+
+## 📊 Visual 1 — Hourly Return Bar Chart
+![Hourly Return Bar Chart](image-2.png)
+
+**Type:** Clustered Column Chart  
+**X-axis:** hour  
+**Y-axis:** avg_return_pct  
+**Legend:** trading_session  
+
+### Purpose
+Shows average return per hour across trading sessions.
+
+### Insight
+- Identifies “alpha hours”
+- European session shows stronger consistency
+- US session shows mixed returns
+
+---
+
+## 📉 Visual 2 — Volatility by Hour
+![Volatility by Hour](image-3.png)
+
+**Type:** Line Chart  
+**X-axis:** hour  
+**Y-axis:** volatility  
+
+### Purpose
+Shows price fluctuation intensity by hour.
+
+### Insight
+- Peak volatility: 13:00–15:00 UTC
+- US session drives largest movements
+
+---
+
+## 🟩 Visual 3 — Bullish vs Bearish Hours
+![Bullish vs Bearish Hours](image-4.png)
+
+**Type:** Bar Chart  
+**X-axis:** bullish_pct  
+**Y-axis:** hour  
+
+### Purpose
+Shows probability of price increasing per hour.
+
+### Insight
+- >50% = bullish bias
+- Strong bullish periods: 21:00–22:00 UTC
+- Some hours consistently bearish
+
+---
+
+## 🧾 Visual 4 — Session Performance Cards
+![Session Performance Cards](image-5.png)
+
+### Metrics
+- Asian Session Avg Return  
+- European Session Avg Return  
+- US Session Avg Return  
+
+### Insight
+- European: ~1.36% (strongest)
+- Asian: ~0.24%
+- US: ~0.06%
+
+---
+
+## 🎛️ Visual 5 — Session Slicer
+![alt text](image-6.png)
+
+**Field:** trading_session  
+
+### Purpose
+Filters all visuals by trading session.
+
+---
+
+## 🧠 Key Insights
+
+- Time-of-day significantly impacts BTC behavior  
+- European session delivers strongest returns  
+- US session delivers highest volatility  
+- Bullish bias varies across hours  
+
+---
+
+## 🚀 Pipeline Summary
+
+Binance → dlt → ADLS → Synapse → dbt → Power BI
+
+
+## 📚 References & Data Sources
+
+### 📊 Data Source
+
+- :contentReference[oaicite:0]{index=0} Public Data Repository  
+  https://github.com/binance/binance-public-data  
+
+  Used for historical BTC/USDT kline (candlestick) data across multiple years, including OHLC prices, volume, and trade activity at 1-hour intervals.
+
+---
+
+### ⚙️ Tools & Technologies
+
+- :contentReference[oaicite:1]{index=1}  
+  Used for:
+  - Azure Data Lake Storage Gen2 (ADLS)
+  - Azure Synapse Analytics (Dedicated SQL Pool)
+
+- :contentReference[oaicite:2]{index=2}  
+  https://developer.hashicorp.com/terraform/docs  
+  Used for provisioning and managing cloud infrastructure.
+
+- :contentReference[oaicite:3]{index=3}  
+  https://dlthub.com/docs/intro  
+  Used to build the ingestion pipeline with schema evolution and efficient batch loading.
+
+- :contentReference[oaicite:4]{index=4}  
+  https://docs.getdbt.com/  
+  Used for transforming raw data into analytical models.
+
+- :contentReference[oaicite:5]{index=5}  
+  Used for building interactive dashboards and visualizing intraday trading patterns.
+
+---
+
+### 📖 Supporting Documentation
+
+- :contentReference[oaicite:6]{index=6} Data Download Scripts  
+  https://github.com/binance/binance-public-data/tree/master/python  
+
+  Referenced for understanding file structure, naming conventions, and download methodology.
+
+- :contentReference[oaicite:7]{index=7} Azure Synapse Documentation  
+  https://learn.microsoft.com/en-us/azure/synapse-analytics/  
+
+  Used for configuring SQL pools, external access, and query execution.
+
+- :contentReference[oaicite:8]{index=8} Data Engineering Zoomcamp  
+  https://github.com/DataTalksClub/data-engineering-zoomcamp  
+
+  Provided foundational guidance on modern data stack architecture and best practices.
+
+---
+
+### 🤖 Development Aids
+
+- :contentReference[oaicite:9]{index=9}  
+- :contentReference[oaicite:10]{index=10}  
+- :contentReference[oaicite:11]{index=11}  
+
+  Used as development aids for debugging, structuring code, and exploring implementation approaches.  
+  All architectural decisions, implementation logic, and validation were independently reviewed and adapted.
+
+---
+
+## 🙌 Acknowledgment
+
+This project was completed as part of a hands-on data engineering learning journey, combining real-world financial data with modern cloud-based data stack practices.
+
+
+*Developed as a project sddignment for Data Engineering Zoomcamp 2026 — [DataTalks.Club](https://github.com/DataTalksClub).*
+
+Thank you.
